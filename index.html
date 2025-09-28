@@ -1,0 +1,3089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediGrid - Healthcare Network Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --info-purple: #8b5cf6;
+            --bg-light: #f8fafc;
+            --card-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--card-white);
+            border-right: 1px solid var(--border-light);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+            color: white;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .user-profile {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+        }
+
+        .security-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+            color: var(--success-green);
+        }
+
+        .security-status i {
+            font-size: 0.75rem;
+        }
+
+        .nav-menu {
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            padding: 0 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-gray);
+        }
+
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            text-decoration: none;
+            color: var(--text-gray);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+            color: white;
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger-red);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            margin: 1rem 1.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--danger-red);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: var(--card-white);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-orange);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online { background: var(--success-green); }
+        .status-dot.warning { background: var(--warning-orange); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-light);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--success-green));
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-gray);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive { color: var(--success-green); }
+        .stat-change.negative { color: var(--danger-red); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-orange);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--border-light);
+            color: var(--text-gray);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        /* Alert System */
+        .alert-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .alert-critical {
+            background: rgba(239, 68, 68, 0.05);
+            border-left-color: var(--danger-red);
+        }
+
+        .alert-urgent {
+            background: rgba(245, 158, 11, 0.05);
+            border-left-color: var(--warning-orange);
+        }
+
+        .alert-info {
+            background: rgba(37, 99, 235, 0.05);
+            border-left-color: var(--primary-blue);
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .alert-critical .alert-icon {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        .alert-urgent .alert-icon {
+            background: var(--warning-orange);
+            color: white;
+        }
+
+        .alert-info .alert-icon {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-description {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-time {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+        }
+
+        .alert-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        /* Clinic List */
+        .clinic-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .clinic-card {
+            background: var(--card-white);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .clinic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .clinic-online { border-left-color: var(--success-green); }
+        .clinic-backup { border-left-color: var(--warning-orange); }
+        .clinic-offline { border-left-color: var(--danger-red); }
+
+        .clinic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .clinic-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .clinic-location {
+            color: var(--text-gray);
+            font-size: 0.875rem;
+        }
+
+        .clinic-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+        }
+
+        .status-backup {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-orange);
+        }
+
+        .status-offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-red);
+        }
+
+        .clinic-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .clinic-stat {
+            text-align: center;
+        }
+
+        .clinic-stat-number {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .clinic-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+        }
+
+        .clinic-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .form-section {
+            background: var(--card-white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-section h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: var(--card-white);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-light);
+        }
+
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dark);
+        }
+
+        td {
+            color: var(--text-gray);
+        }
+
+        tbody tr:hover {
+            background: rgba(37, 99, 235, 0.02);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-orange);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-red);
+        }
+
+        .badge-info {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-blue);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Authentication Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--success-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: var(--card-white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .auth-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .auth-header p {
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
+
+        .auth-form {
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-form .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .auth-links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-red);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 100%;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .dashboard-grid, .stats-grid, .clinic-list {
+                grid-template-columns: 1fr;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: var(--card-white);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 0.25rem;
+            margin-left: 1rem;
+        }
+
+        .modal-close:hover {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Screen -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-container" id="login-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="logo">
+                        <i class="fas fa-heartbeat"></i>
+                        <span>MediGrid</span>
+                    </div>
+                    <h2>Healthcare Network Access</h2>
+                    <p>Secure login to protect patient data</p>
+                </div>
+                
+                <div class="auth-error" id="auth-error"></div>
+                
+                <form class="auth-form" id="login-form">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-user"></i> Username or Email
+                        </label>
+                        <input type="text" class="form-input" id="username" required 
+                               placeholder="Try: admin@medigrid.co.za">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <input type="password" class="form-input" id="password" required 
+                               placeholder="Try: MediGrid2024!">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary auth-btn">
+                        <i class="fas fa-sign-in-alt"></i> Secure Login
+                    </button>
+                </form>
+                
+                <div class="auth-links">
+                    <small>Demo credentials above or use: nurse@medigrid.co.za / Nursing123!</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" style="display: none;" id="main-app">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>MediGrid</span>
+                </div>
+            </div>
+            
+            <div class="user-profile" id="user-profile">
+                <div class="user-avatar" id="user-avatar">SM</div>
+                <div class="user-info">
+                    <div class="user-name" id="user-name">Dr. Sarah Mthembu</div>
+                    <div class="user-role" id="user-role">System Administrator</div>
+                    <div class="security-status">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>2FA Enabled</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link active" data-page="dashboard">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="clinics">
+                            <i class="fas fa-hospital"></i>
+                            <span>Clinic Network</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="patients">
+                            <i class="fas fa-users"></i>
+                            <span>Patient Management</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="inventory">
+                            <i class="fas fa-pills"></i>
+                            <span>Medicine Inventory</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="emergencies">
+                            <i class="fas fa-ambulance"></i>
+                            <span>Emergency Alerts</span>
+                            <span class="nav-badge" id="emergency-count">5</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="power">
+                            <i class="fas fa-bolt"></i>
+                            <span>Power Status</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Analytics</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="ai-diagnosis">
+                            <i class="fas fa-brain"></i>
+                            <span>AI Diagnosis</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="reports">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Reports & Analytics</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <div class="nav-item">
+                        <a href="#" class="nav-link" data-page="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title" id="page-title">Healthcare Network Dashboard</h1>
+                </div>
+                
+                <div class="top-bar-actions">
+                    <div class="status-indicator status-online">
+                        <div class="status-dot online"></div>
+                        <span>Network Online</span>
+                    </div>
+                    <div class="status-indicator status-warning" id="backup-status">
+                        <div class="status-dot warning"></div>
+                        <span id="backup-text">3 Clinics on Backup</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Dashboard Page -->
+                <div class="page active" id="dashboard">
+                    <div class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <div class="stat-number" id="total-clinics">28</div>
+                            <div class="stat-label">Active Clinics</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2 since yesterday</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="stat-number" id="patients-today">247</div>
+                            <div class="stat-label">Patients Today</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+18% from last week</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-ambulance"></i>
+                            </div>
+                            <div class="stat-number" id="active-emergencies">5</div>
+                            <div class="stat-label">Active Emergencies</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Urgent attention needed</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-number">94%</div>
+                            <div class="stat-label">Network Uptime</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Excellent performance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Patient Flow Analytics</h3>
+                                <div class="card-actions">
+                                    <button class="btn btn-secondary">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="patient-flow-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Power Status Distribution</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="power-status-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Recent Emergency Alerts</h3>
+                                <button class="btn btn-primary" onclick="navigateToPage('emergencies')">
+                                    <i class="fas fa-eye"></i> View All
+                                </button>
+                            </div>
+                            <div class="alert-list" id="recent-alerts">
+                                <!-- Dynamic content will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Top Performing Clinics</h3>
+                                <button class="btn btn-secondary" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="top-clinics">
+                                <!-- Dynamic content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clinics Page -->
+                <div class="page" id="clinics">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Healthcare Network Overview</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="addClinic()">
+                                    <i class="fas fa-plus"></i> Add Clinic
+                                </button>
+                                <button class="btn btn-secondary" onclick="refreshClinics()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="clinic-list" id="clinic-list">
+                            <!-- Dynamic content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patients Page -->
+                <div class="page" id="patients">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Patient Management System</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="addPatient()">
+                                    <i class="fas fa-user-plus"></i> Add Patient
+                                </button>
+                                <button class="btn btn-secondary" onclick="exportData()">
+                                    <i class="fas fa-download"></i> Export List
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Patient ID</th>
+                                        <th>Name</th>
+                                        <th>Age</th>
+                                        <th>Clinic</th>
+                                        <th>Last Visit</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patients-table">
+                                    <tr>
+                                        <td>#P001</td>
+                                        <td>Sarah Mthembu</td>
+                                        <td>34</td>
+                                        <td>Soweto Community</td>
+                                        <td>Today, 14:30</td>
+                                        <td><span class="badge badge-success">Active</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>#P002</td>
+                                        <td>John Ndlovu</td>
+                                        <td>67</td>
+                                        <td>Alexandra Primary</td>
+                                        <td>Yesterday, 09:15</td>
+                                        <td><span class="badge badge-warning">Follow-up</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>#P003</td>
+                                        <td>Maria Santos</td>
+                                        <td>28</td>
+                                        <td>Midrand Medical</td>
+                                        <td>2 days ago</td>
+                                        <td><span class="badge badge-success">Active</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Page -->
+                <div class="page" id="inventory">
+                    <div class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="stat-number">1,247</div>
+                            <div class="stat-label">Total Items</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Well Stocked</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-number">23</div>
+                            <div class="stat-label">Low Stock Items</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Needs Attention</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <div class="stat-number">7</div>
+                            <div class="stat-label">Expiring Soon</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-calendar-times"></i>
+                                <span>Within 30 days</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-number">R 2.4M</div>
+                            <div class="stat-label">Total Value</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Optimized Distribution</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Medicine Inventory Management</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="addMedicine()">
+                                    <i class="fas fa-plus"></i> Add Medicine
+                                </button>
+                                <button class="btn btn-secondary" onclick="requestDelivery()">
+                                    <i class="fas fa-truck"></i> Request Delivery
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Medicine</th>
+                                        <th>Category</th>
+                                        <th>Stock Level</th>
+                                        <th>Location</th>
+                                        <th>Expiry Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Paracetamol 500mg</td>
+                                        <td>Analgesic</td>
+                                        <td>850 tablets</td>
+                                        <td>Soweto Community</td>
+                                        <td>Dec 2025</td>
+                                        <td><span class="badge badge-success">Good Stock</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Insulin Glargine</td>
+                                        <td>Diabetes</td>
+                                        <td>12 vials</td>
+                                        <td>Orange Farm</td>
+                                        <td>Jan 2026</td>
+                                        <td><span class="badge badge-danger">Low Stock</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Amoxicillin 250mg</td>
+                                        <td>Antibiotic</td>
+                                        <td>340 capsules</td>
+                                        <td>Alexandra Primary</td>
+                                        <td>Sep 2025</td>
+                                        <td><span class="badge badge-warning">Expiring Soon</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergencies Page -->
+                <div class="page" id="emergencies">
+                    <div class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-ambulance"></i>
+                            </div>
+                            <div class="stat-number">5</div>
+                            <div class="stat-label">Active Emergencies</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Requires Action</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-number">23</div>
+                            <div class="stat-label">Resolved Today</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Good Response Time</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-number">12 min</div>
+                            <div class="stat-label">Avg Response Time</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-clock"></i>
+                                <span>Under Target</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="stat-number">96%</div>
+                            <div class="stat-label">Success Rate</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-heart"></i>
+                                <span>Excellent Performance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Emergency Alert System</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-danger" onclick="createEmergencyAlert()">
+                                    <i class="fas fa-plus"></i> New Alert
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewEmergencyHistory()">
+                                    <i class="fas fa-history"></i> View History
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert-list" id="emergency-list">
+                            <div class="alert-item alert-critical">
+                                <div class="alert-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">CRITICAL: Cardiac Emergency</div>
+                                    <div class="alert-description">
+                                        <strong>Location:</strong> Soweto Community Clinic<br>
+                                        <strong>Patient:</strong> Male, 58 years<br>
+                                        <strong>Symptoms:</strong> Chest pain, shortness of breath
+                                    </div>
+                                    <div class="alert-time">Active • 2 minutes ago</div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn btn-danger" onclick="dispatchEmergency(1)">Dispatch</button>
+                                    <button class="btn btn-secondary" onclick="viewEmergencyDetails(1)">Details</button>
+                                </div>
+                            </div>
+
+                            <div class="alert-item alert-urgent">
+                                <div class="alert-icon">
+                                    <i class="fas fa-baby"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">URGENT: Labor Emergency</div>
+                                    <div class="alert-description">
+                                        <strong>Location:</strong> Orange Farm Community Health<br>
+                                        <strong>Patient:</strong> Female, 24 years<br>
+                                        <strong>Status:</strong> Complications during delivery
+                                    </div>
+                                    <div class="alert-time">Active • 8 minutes ago</div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn btn-warning" onclick="dispatchEmergency(2)">Dispatch</button>
+                                    <button class="btn btn-secondary" onclick="viewEmergencyDetails(2)">Details</button>
+                                </div>
+                            </div>
+
+                            <div class="alert-item alert-info">
+                                <div class="alert-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">SYSTEM: Power Outage Alert</div>
+                                    <div class="alert-description">
+                                        <strong>Location:</strong> Midrand Medical Centre<br>
+                                        <strong>Status:</strong> Switched to backup power<br>
+                                        <strong>Battery Level:</strong> 87% (6 hours remaining)
+                                    </div>
+                                    <div class="alert-time">Active • 22 minutes ago</div>
+                                </div>
+                                <div class="alert-actions">
+                                    <button class="btn btn-primary" onclick="monitorPowerStatus(3)">Monitor</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Power Status Page -->
+                <div class="page" id="power">
+                    <div class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-plug"></i>
+                            </div>
+                            <div class="stat-number">25</div>
+                            <div class="stat-label">Grid Connected</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-plug"></i>
+                                <span>Stable Power</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-battery-three-quarters"></i>
+                            </div>
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Backup Power</div>
+                            <div class="stat-change negative">
+                                <i class="fas fa-battery-three-quarters"></i>
+                                <span>Load-shedding Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-power-off"></i>
+                            </div>
+                            <div class="stat-number">0</div>
+                            <div class="stat-label">Power Outage</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>All Systems Online</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-number">92%</div>
+                            <div class="stat-label">Network Uptime</div>
+                            <div class="stat-change positive">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Above Target</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Load-shedding Schedule</h3>
+                                <div class="card-actions">
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-sync-alt"></i> Refresh Schedule
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time Slot</th>
+                                            <th>Stage</th>
+                                            <th>Affected Areas</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>14:00 - 16:00</td>
+                                            <td>Stage 4</td>
+                                            <td>Alexandra, Orange Farm</td>
+                                            <td><span class="badge badge-danger">Active</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>18:00 - 20:00</td>
+                                            <td>Stage 6</td>
+                                            <td>Soweto, Midrand</td>
+                                            <td><span class="badge badge-warning">Upcoming</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>22:00 - 00:00</td>
+                                            <td>Stage 2</td>
+                                            <td>Johannesburg CBD</td>
+                                            <td><span class="badge badge-info">Scheduled</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Battery Status Monitor</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="battery-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Diagnosis Page -->
+                <div class="page" id="ai-diagnosis">
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3><i class="fas fa-brain"></i> AI Symptom Checker</h3>
+                            <form id="diagnosis-form">
+                                <div class="form-group">
+                                    <label class="form-label">Patient Symptoms</label>
+                                    <textarea class="form-textarea" placeholder="Describe patient symptoms (e.g., chest pain, difficulty breathing, fever)..." required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Patient Age</label>
+                                    <input type="number" class="form-input" min="0" max="120" placeholder="Age in years">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Clinic Location</label>
+                                    <select class="form-select" required>
+                                        <option value="">Select a clinic...</option>
+                                        <option value="soweto">Soweto Community Clinic</option>
+                                        <option value="alexandra">Alexandra Primary Healthcare</option>
+                                        <option value="orange-farm">Orange Farm Community Health</option>
+                                        <option value="midrand">Midrand Medical Centre</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-brain"></i> Analyze Symptoms
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-stethoscope"></i> Diagnosis Results</h3>
+                            <div id="diagnosis-results">
+                                <div class="empty-state">
+                                    <i class="fas fa-stethoscope"></i>
+                                    <p>Enter symptoms above to get AI diagnosis</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div class="page" id="reports">
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Patient Trends (Last 30 Days)</h3>
+                                <div class="card-actions">
+                                    <select class="form-select" style="width: auto;">
+                                        <option>Last 30 Days</option>
+                                        <option>Last 7 Days</option>
+                                        <option>Last 90 Days</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="patient-trends-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Top Health Conditions</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="conditions-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div class="page" id="settings">
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3><i class="fas fa-cog"></i> System Configuration</h3>
+                            <form>
+                                <div class="form-group">
+                                    <label class="form-label">Organization Name</label>
+                                    <input type="text" class="form-input" value="MediGrid Healthcare Network">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Emergency Contact</label>
+                                    <input type="tel" class="form-input" value="+27 11 123 4567">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Alert Threshold (Minutes)</label>
+                                    <input type="number" class="form-input" value="15">
+                                </div>
+                                <button type="submit" class="btn btn-primary" onclick="saveSettings(event)">Save Settings</button>
+                            </form>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-bell"></i> Notification Settings</h3>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Emergency Alerts</span>
+                                    <input type="checkbox" checked style="transform: scale(1.2);" onchange="updateNotificationSetting('emergency', this.checked)">
+                                </label>
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Power Outage Notifications</span>
+                                    <input type="checkbox" checked style="transform: scale(1.2);" onchange="updateNotificationSetting('power', this.checked)">
+                                </label>
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Medicine Stock Alerts</span>
+                                    <input type="checkbox" checked style="transform: scale(1.2);" onchange="updateNotificationSetting('medicine', this.checked)">
+                                </label>
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span>Daily Reports</span>
+                                    <input type="checkbox" style="transform: scale(1.2);" onchange="updateNotificationSetting('reports', this.checked)">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-server"></i> API Configuration</h3>
+                            <div class="form-group">
+                                <label class="form-label">API Endpoint</label>
+                                <input type="url" class="form-input" value="https://api.medigrid.co.za" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sync Interval (minutes)</label>
+                                <select class="form-select" onchange="updateSyncInterval(this.value)">
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="15" selected>15</option>
+                                    <option value="30">30</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Overlays -->
+    <div class="modal-overlay" id="clinic-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Clinic</h3>
+                <button class="modal-close" onclick="closeModal('clinic-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="clinic-form">
+                    <div class="form-group">
+                        <label class="form-label">Clinic Name</label>
+                        <input type="text" class="form-input" id="clinic-name" placeholder="Enter clinic name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-input" id="clinic-location" placeholder="Enter location" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Staff Count</label>
+                            <input type="number" class="form-input" id="clinic-staff" min="1" placeholder="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Initial Status</label>
+                            <select class="form-select" id="clinic-status">
+                                <option value="online">Online</option>
+                                <option value="backup">Backup Power</option>
+                                <option value="offline">Offline</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('clinic-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitClinicForm()">
+                    <i class="fas fa-plus"></i> Add Clinic
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="patient-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Patient</h3>
+                <button class="modal-close" onclick="closeModal('patient-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="patient-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-input" id="patient-firstname" placeholder="First name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-input" id="patient-lastname" placeholder="Last name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Age</label>
+                            <input type="number" class="form-input" id="patient-age" min="0" max="120" placeholder="Age" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" id="patient-gender" required>
+                                <option value="">Select gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assigned Clinic</label>
+                        <select class="form-select" id="patient-clinic" required>
+                            <option value="">Select clinic</option>
+                            <option value="Soweto Community">Soweto Community</option>
+                            <option value="Alexandra Primary">Alexandra Primary</option>
+                            <option value="Orange Farm">Orange Farm</option>
+                            <option value="Midrand Medical">Midrand Medical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical History</label>
+                        <textarea class="form-textarea" id="patient-history" placeholder="Brief medical history..." rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('patient-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitPatientForm()">
+                    <i class="fas fa-user-plus"></i> Add Patient
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="medicine-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Medicine</h3>
+                <button class="modal-close" onclick="closeModal('medicine-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="medicine-form">
+                    <div class="form-group">
+                        <label class="form-label">Medicine Name</label>
+                        <input type="text" class="form-input" id="medicine-name" placeholder="Medicine Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="medicine-category" required>
+                            <option value="">Select category</option>
+                            <option value="Analgesic">Analgesic</option>
+                            <option value="Antibiotic">Antibiotic</option>
+                            <option value="Diabetes">Diabetes</option>
+                            <option value="Cardiac">Cardiac</option>
+                            <option value="Respiratory">Respiratory</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Stock</label>
+                            <input type="text" class="form-input" id="medicine-stock" placeholder="e.g., 500 tablets" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <select class="form-select" id="medicine-location" required>
+                                <option value="">Select location</option>
+                                <option value="Soweto Community">Soweto Community</option>
+                                <option value="Alexandra Primary">Alexandra Primary</option>
+                                <option value="Orange Farm">Orange Farm</option>
+                                <option value="Midrand Medical">Midrand Medical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="date" class="form-input" id="medicine-expiry" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="medicine-status">
+                            <option value="Good Stock">Good Stock</option>
+                            <option value="Low Stock">Low Stock</option>
+                            <option value="Expiring Soon">Expiring Soon</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('medicine-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitMedicineForm()">
+                    <i class="fas fa-pills"></i> Add Medicine
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="emergency-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Emergency Alert</h3>
+                <button class="modal-close" onclick="closeModal('emergency-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="emergency-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-select" id="emergency-type" required>
+                                <option value="">Select type</option>
+                                <option value="CRITICAL">CRITICAL</option>
+                                <option value="URGENT">URGENT</option>
+                                <option value="HIGH">HIGH</option>
+                                <option value="INFO">INFO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Location</label>
+                            <select class="form-select" id="emergency-location" required>
+                                <option value="">Select location</option>
+                                <option value="Soweto Community Clinic">Soweto Community Clinic</option>
+                                <option value="Alexandra Primary Healthcare">Alexandra Primary Healthcare</option>
+                                <option value="Orange Farm Community Health">Orange Farm Community Health</option>
+                                <option value="Midrand Medical Centre">Midrand Medical Centre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Alert Title</label>
+                        <input type="text" class="form-input" id="emergency-title" placeholder="Brief emergency description" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="emergency-description" placeholder="Detailed emergency information..." rows="4" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Patient Age (if applicable)</label>
+                            <input type="number" class="form-input" id="emergency-age" min="0" max="120" placeholder="Age">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Patient Gender (if applicable)</label>
+                            <select class="form-select" id="emergency-gender">
+                                <option value="">Not specified</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('emergency-modal')">Cancel</button>
+                <button class="btn btn-danger" onclick="submitEmergencyForm()">
+                    <i class="fas fa-exclamation-triangle"></i> Create Alert
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication state (using in-memory storage instead of localStorage)
+        let authState = {
+            isAuthenticated: false,
+            user: null,
+            loginAttempts: 0,
+            maxLoginAttempts: 3
+        };
+
+        // Sample users for demonstration
+        const sampleUsers = {
+            'admin@medigrid.co.za': {
+                password: 'MediGrid2024!',
+                name: 'Dr. Sarah Mthembu',
+                role: 'System Administrator',
+                avatar: 'SM'
+            },
+            'nurse@medigrid.co.za': {
+                password: 'Nursing123!',
+                name: 'Sister Mary Ndlovu',
+                role: 'Head Nurse',
+                avatar: 'MN'
+            },
+            'doctor@medigrid.co.za': {
+                password: 'Doctor456!',
+                name: 'Dr. John Zulu',
+                role: 'Chief Medical Officer',
+                avatar: 'JZ'
+            }
+        };
+
+        // Global state
+        let currentPage = 'dashboard';
+        let charts = {};
+        let sampleData = {
+            clinics: [
+                { id: 1, name: 'Soweto Community Clinic', location: 'Soweto, Johannesburg', status: 'online', staff: 12, patients: 156, power: 'grid', battery: 100 },
+                { id: 2, name: 'Alexandra Primary Healthcare', location: 'Alexandra Township', status: 'backup', staff: 8, patients: 89, power: 'backup', battery: 87 },
+                { id: 3, name: 'Orange Farm Community Health', location: 'Orange Farm', status: 'online', staff: 5, patients: 23, power: 'grid', battery: 100 },
+                { id: 4, name: 'Midrand Medical Centre', location: 'Midrand', status: 'backup', staff: 15, patients: 78, power: 'backup', battery: 91 },
+                { id: 5, name: 'Sandton Health Plaza', location: 'Sandton', status: 'online', staff: 20, patients: 134, power: 'grid', battery: 100 }
+            ],
+            emergencies: [
+                { id: 1, type: 'CRITICAL', title: 'Cardiac Emergency', location: 'Soweto Community Clinic', time: '2 minutes ago' },
+                { id: 2, type: 'URGENT', title: 'Labor Emergency', location: 'Orange Farm Community Health', time: '8 minutes ago' },
+                { id: 3, type: 'INFO', title: 'Power Outage Alert', location: 'Midrand Medical Centre', time: '22 minutes ago' }
+            ]
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAuth();
+        });
+
+        // Authentication functions
+        function initializeAuth() {
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            // Show auth screen by default
+            showAuthScreen();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('auth-error');
+
+            // Clear previous errors
+            errorDiv.style.display = 'none';
+
+            // Check if user exists and password matches
+            const user = sampleUsers[username];
+            if (!user || user.password !== password) {
+                authState.loginAttempts++;
+                
+                let errorMessage = 'Invalid credentials. ';
+                if (authState.loginAttempts >= authState.maxLoginAttempts) {
+                    errorMessage += 'Account locked due to multiple failed attempts.';
+                } else {
+                    errorMessage += `${authState.maxLoginAttempts - authState.loginAttempts} attempts remaining.`;
+                }
+                
+                showError(errorMessage);
+                
+                if (authState.loginAttempts >= authState.maxLoginAttempts) {
+                    document.getElementById('login-form').style.pointerEvents = 'none';
+                    document.getElementById('login-form').style.opacity = '0.5';
+                }
+                return;
+            }
+
+            // Successful login
+            authState.isAuthenticated = true;
+            authState.user = user;
+            authState.loginAttempts = 0;
+
+            showMainApp();
+            initializeApp();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('auth-error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showAuthScreen() {
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+        }
+
+        function logout() {
+            authState.isAuthenticated = false;
+            authState.user = null;
+            
+            // Reset form
+            document.getElementById('login-form').reset();
+            document.getElementById('login-form').style.pointerEvents = 'auto';
+            document.getElementById('login-form').style.opacity = '1';
+            document.getElementById('auth-error').style.display = 'none';
+            
+            showAuthScreen();
+        }
+
+        function initializeApp() {
+            updateUserProfile();
+            initializeNavigation();
+            loadDashboardData();
+            initializeCharts();
+            updateEmergencyBadge();
+        }
+
+        function updateUserProfile() {
+            const user = authState.user;
+            if (user) {
+                document.getElementById('user-avatar').textContent = user.avatar;
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('user-role').textContent = user.role;
+            }
+        }
+
+        // Navigation functionality
+        function initializeNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+            const pageTitle = document.getElementById('page-title');
+            
+            const pageNames = {
+                dashboard: 'Healthcare Network Dashboard',
+                clinics: 'Clinic Network Management',
+                patients: 'Patient Management System',
+                inventory: 'Medicine Inventory Control',
+                emergencies: 'Emergency Alert Center',
+                power: 'Power Status Monitor',
+                'ai-diagnosis': 'AI Symptom Analysis',
+                reports: 'Reports & Analytics',
+                settings: 'System Settings'
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetPage = this.getAttribute('data-page');
+                    navigateToPage(targetPage);
+                });
+            });
+            
+            window.navigateToPage = function(targetPage) {
+                // Update active nav link
+                navLinks.forEach(nl => nl.classList.remove('active'));
+                const targetLink = document.querySelector(`[data-page="${targetPage}"]`);
+                if (targetLink) targetLink.classList.add('active');
+                
+                // Show target page
+                pages.forEach(page => page.classList.remove('active'));
+                const targetPageEl = document.getElementById(targetPage);
+                if (targetPageEl) targetPageEl.classList.add('active');
+                
+                // Update page title
+                pageTitle.textContent = pageNames[targetPage] || 'MediGrid Dashboard';
+                currentPage = targetPage;
+                
+                // Load page-specific data
+                loadPageData(targetPage);
+            };
+        }
+
+        // Load dashboard data
+        function loadDashboardData() {
+            loadRecentAlerts();
+            loadTopClinics();
+            updateBackupStatus();
+        }
+
+        function loadRecentAlerts() {
+            const container = document.getElementById('recent-alerts');
+            if (!container) return;
+            
+            if (sampleData.emergencies.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-shield-alt"></i>
+                        <p>No active alerts</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sampleData.emergencies.slice(0, 3).map(alert => `
+                <div class="alert-item alert-${alert.type.toLowerCase()}">
+                    <div class="alert-icon">
+                        <i class="fas fa-${getAlertIcon(alert.type)}"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">${alert.type}: ${alert.title}</div>
+                        <div class="alert-description">Location: ${alert.location}</div>
+                        <div class="alert-time">${alert.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadTopClinics() {
+            const container = document.getElementById('top-clinics');
+            if (!container) return;
+            
+            const topClinics = sampleData.clinics
+                .sort((a, b) => b.patients - a.patients)
+                .slice(0, 3);
+
+            container.innerHTML = topClinics.map(clinic => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-light);">
+                    <div>
+                        <div style="font-weight: 600;">${clinic.name}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-gray);">${clinic.patients} patients today</div>
+                    </div>
+                    <span class="badge badge-${getStatusBadge(clinic.status)}">${clinic.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateBackupStatus() {
+            const backupClinics = sampleData.clinics.filter(clinic => clinic.status === 'backup').length;
+            const backupText = document.getElementById('backup-text');
+            if (backupText) {
+                backupText.textContent = `${backupClinics} Clinics on Backup`;
+            }
+        }
+
+        function updateEmergencyBadge() {
+            const activeEmergencies = sampleData.emergencies.length;
+            const emergencyCount = document.getElementById('emergency-count');
+            const activeEmergenciesEl = document.getElementById('active-emergencies');
+            
+            if (emergencyCount) emergencyCount.textContent = activeEmergencies;
+            if (activeEmergenciesEl) activeEmergenciesEl.textContent = activeEmergencies;
+        }
+
+        // Load page-specific data
+        function loadPageData(page) {
+            switch(page) {
+                case 'clinics':
+                    loadClinics();
+                    break;
+                case 'emergencies':
+                    // Already loaded
+                    break;
+            }
+        }
+
+        function loadClinics() {
+            const container = document.getElementById('clinic-list');
+            if (!container) return;
+            
+            container.innerHTML = sampleData.clinics.map(clinic => `
+                <div class="clinic-card clinic-${clinic.status}">
+                    <div class="clinic-header">
+                        <div>
+                            <div class="clinic-name">${clinic.name}</div>
+                            <div class="clinic-location">${clinic.location}</div>
+                        </div>
+                        <span class="clinic-status status-${clinic.status}">${clinic.status.toUpperCase()}</span>
+                    </div>
+                    <div class="clinic-stats">
+                        <div class="clinic-stat">
+                            <div class="clinic-stat-number">${clinic.patients}</div>
+                            <div class="clinic-stat-label">Patients Today</div>
+                        </div>
+                        <div class="clinic-stat">
+                            <div class="clinic-stat-number">${clinic.staff}</div>
+                            <div class="clinic-stat-label">Staff Members</div>
+                        </div>
+                        <div class="clinic-stat">
+                            <div class="clinic-stat-number">${clinic.battery}%</div>
+                            <div class="clinic-stat-label">Battery Level</div>
+                        </div>
+                    </div>
+                    <div class="clinic-actions">
+                        <button class="btn btn-primary" onclick="viewClinicDetails(${clinic.id})">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        <button class="btn btn-secondary" onclick="editClinic(${clinic.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-${clinic.power === 'grid' ? 'success' : 'warning'}" onclick="togglePowerSource(${clinic.id})">
+                            <i class="fas fa-${clinic.power === 'grid' ? 'plug' : 'battery-three-quarters'}"></i> ${clinic.power === 'grid' ? 'Grid' : 'Battery'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            setTimeout(() => {
+                initPatientFlowChart();
+                initPowerStatusChart();
+                initBatteryChart();
+                initPatientTrendsChart();
+                initConditionsChart();
+            }, 100);
+        }
+
+        function initPatientFlowChart() {
+            const ctx = document.getElementById('patient-flow-chart');
+            if (ctx && ctx.getContext) {
+                charts.patientFlow = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['6AM', '8AM', '10AM', '12PM', '2PM', '4PM', '6PM'],
+                        datasets: [{
+                            label: 'Patient Visits',
+                            data: [12, 28, 45, 67, 89, 52, 23],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initPowerStatusChart() {
+            const ctx = document.getElementById('power-status-chart');
+            if (ctx && ctx.getContext) {
+                charts.powerStatus = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Grid Power', 'Backup Power', 'Offline'],
+                        datasets: [{
+                            data: [25, 3, 0],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0,
+                            cutout: '70%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { usePointStyle: true }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initBatteryChart() {
+            const ctx = document.getElementById('battery-chart');
+            if (ctx && ctx.getContext) {
+                charts.battery = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Soweto', 'Alexandra', 'Orange Farm', 'Midrand', 'Sandton'],
+                        datasets: [{
+                            label: 'Battery Level (%)',
+                            data: [100, 87, 100, 91, 100],
+                            backgroundColor: function(context) {
+                                const value = context.parsed.y;
+                                return value > 90 ? '#10b981' : value > 70 ? '#f59e0b' : '#ef4444';
+                            },
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100 },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initPatientTrendsChart() {
+            const ctx = document.getElementById('patient-trends-chart');
+            if (ctx && ctx.getContext) {
+                charts.patientTrends = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Total Patients',
+                            data: [1247, 1356, 1189, 1423],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'Emergency Cases',
+                            data: [34, 28, 41, 29],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initConditionsChart() {
+            const ctx = document.getElementById('conditions-chart');
+            if (ctx && ctx.getContext) {
+                charts.conditions = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Diabetes', 'Hypertension', 'Respiratory', 'Cardiac', 'Other'],
+                        datasets: [{
+                            data: [35, 28, 18, 12, 7],
+                            backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Utility functions
+        function getAlertIcon(type) {
+            const icons = {
+                'CRITICAL': 'heart',
+                'URGENT': 'baby',
+                'HIGH': 'exclamation-circle',
+                'INFO': 'bolt'
+            };
+            return icons[type] || 'info-circle';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'online': 'success',
+                'backup': 'warning',
+                'offline': 'danger'
+            };
+            return badges[status] || 'secondary';
+        }
+
+        // Action functions
+        function addClinic() {
+            openModal('clinic-modal');
+        }
+
+        function addPatient() {
+            openModal('patient-modal');
+        }
+
+        function addMedicine() {
+            openModal('medicine-modal');
+        }
+
+        function createEmergencyAlert() {
+            openModal('emergency-modal');
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                // Reset form
+                const form = modal.querySelector('form');
+                if (form) form.reset();
+            }
+        }
+
+        // Form submission functions
+        function submitClinicForm() {
+            const name = document.getElementById('clinic-name').value;
+            const location = document.getElementById('clinic-location').value;
+            const staff = document.getElementById('clinic-staff').value;
+            const status = document.getElementById('clinic-status').value;
+            
+            if (name && location && staff) {
+                const newClinic = {
+                    id: sampleData.clinics.length + 1,
+                    name: name,
+                    location: location,
+                    status: status,
+                    staff: parseInt(staff),
+                    patients: Math.floor(Math.random() * 50) + 10,
+                    power: status === 'online' ? 'grid' : 'backup',
+                    battery: status === 'online' ? 100 : Math.floor(Math.random() * 30) + 70
+                };
+                
+                sampleData.clinics.push(newClinic);
+                loadClinics();
+                updateStats();
+                closeModal('clinic-modal');
+                showNotification('Clinic added successfully!', 'success');
+            }
+        }
+
+        function submitPatientForm() {
+            const firstName = document.getElementById('patient-firstname').value;
+            const lastName = document.getElementById('patient-lastname').value;
+            const age = document.getElementById('patient-age').value;
+            const gender = document.getElementById('patient-gender').value;
+            const clinic = document.getElementById('patient-clinic').value;
+            const history = document.getElementById('patient-history').value;
+            
+            if (firstName && lastName && age && gender && clinic) {
+                const tbody = document.querySelector('#patients-table');
+                if (tbody) {
+                    const newRow = document.createElement('tr');
+                    const patientId = '#P' + String(tbody.children.length + 1).padStart(3, '0');
+                    const fullName = `${firstName} ${lastName}`;
+                    
+                    newRow.innerHTML = `
+                        <td>${patientId}</td>
+                        <td>${fullName}</td>
+                        <td>${age}</td>
+                        <td>${clinic}</td>
+                        <td>Just now</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="viewPatientDetails('${patientId}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(newRow);
+                    updatePatientCount();
+                    closeModal('patient-modal');
+                    showNotification(`Patient ${fullName} added successfully!`, 'success');
+                }
+            }
+        }
+
+        function submitMedicineForm() {
+            const name = document.getElementById('medicine-name').value;
+            const category = document.getElementById('medicine-category').value;
+            const stock = document.getElementById('medicine-stock').value;
+            const location = document.getElementById('medicine-location').value;
+            const expiry = document.getElementById('medicine-expiry').value;
+            const status = document.getElementById('medicine-status').value;
+            
+            if (name && category && stock && location && expiry) {
+                // Add to medicine table (simulated)
+                closeModal('medicine-modal');
+                showNotification(`Medicine "${name}" added with ${stock} units`, 'success');
+                
+                // Update inventory stats
+                setTimeout(() => {
+                    const totalItems = document.querySelector('.stat-number');
+                    if (totalItems && totalItems.textContent.includes(',')) {
+                        const current = parseInt(totalItems.textContent.replace(',', ''));
+                        totalItems.textContent = (current + 1).toLocaleString();
+                    }
+                }, 500);
+            }
+        }
+
+        function submitEmergencyForm() {
+            const type = document.getElementById('emergency-type').value;
+            const location = document.getElementById('emergency-location').value;
+            const title = document.getElementById('emergency-title').value;
+            const description = document.getElementById('emergency-description').value;
+            const age = document.getElementById('emergency-age').value;
+            const gender = document.getElementById('emergency-gender').value;
+            
+            if (type && location && title && description) {
+                const newEmergency = {
+                    id: sampleData.emergencies.length + 1,
+                    type: type,
+                    title: title,
+                    location: location,
+                    description: description,
+                    age: age,
+                    gender: gender,
+                    time: 'Just now'
+                };
+                
+                sampleData.emergencies.unshift(newEmergency);
+                loadRecentAlerts();
+                updateEmergencyBadge();
+                closeModal('emergency-modal');
+                showNotification('Emergency alert created successfully!', 'danger');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const activeModal = document.querySelector('.modal-overlay.active');
+                if (activeModal) {
+                    activeModal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        });
+
+        function refreshData() {
+            showNotification('Refreshing dashboard data...', 'info');
+            
+            // Simulate data refresh with loading
+            const refreshBtn = document.querySelector('[onclick="refreshData()"]');
+            if (refreshBtn) {
+                const originalHTML = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                refreshBtn.disabled = true;
+                
+                setTimeout(() => {
+                    // Randomize some stats
+                    const stats = document.querySelectorAll('.stat-number');
+                    stats.forEach(stat => {
+                        if (stat.textContent.match(/^\d+$/)) {
+                            const current = parseInt(stat.textContent);
+                            const change = Math.floor(Math.random() * 10) - 5;
+                            stat.textContent = Math.max(0, current + change);
+                        }
+                    });
+                    
+                    loadDashboardData();
+                    refreshBtn.innerHTML = originalHTML;
+                    refreshBtn.disabled = false;
+                    showNotification('Dashboard refreshed successfully!', 'success');
+                }, 1500);
+            }
+        }
+
+        function refreshClinics() {
+            showNotification('Refreshing clinic data...', 'info');
+            
+            const refreshBtn = document.querySelector('[onclick="refreshClinics()"]');
+            if (refreshBtn) {
+                const originalHTML = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                refreshBtn.disabled = true;
+                
+                setTimeout(() => {
+                    // Simulate status changes
+                    sampleData.clinics.forEach(clinic => {
+                        if (Math.random() > 0.8) {
+                            clinic.status = clinic.status === 'online' ? 'backup' : 'online';
+                            clinic.battery = Math.floor(Math.random() * 30) + 70;
+                        }
+                    });
+                    
+                    loadClinics();
+                    updateBackupStatus();
+                    refreshBtn.innerHTML = originalHTML;
+                    refreshBtn.disabled = false;
+                    showNotification('Clinic data refreshed!', 'success');
+                }, 1000);
+            }
+        }
+
+        // Additional button functions
+        function viewPatientDetails(patientId) {
+            showNotification(`Viewing details for patient ${patientId}`, 'info');
+        }
+
+        function exportData() {
+            showNotification('Exporting data...', 'info');
+            setTimeout(() => {
+                showNotification('Data exported successfully!', 'success');
+            }, 1000);
+        }
+
+        function dispatchEmergency(alertId) {
+            showNotification('Emergency response dispatched!', 'success');
+        }
+
+        function testConnection() {
+            const btn = event.target;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                showNotification('API connection test successful!', 'success');
+            }, 2000);
+        }
+
+        function downloadBackupCodes() {
+            const codes = ['1A2B-3C4D', '5E6F-7G8H', '9I0J-1K2L', '3M4N-5O6P', '7Q8R-9S0T', '1U2V-3W4X'];
+            const content = 'MediGrid Backup Codes\n\n' + codes.join('\n');
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'medigrid-backup-codes.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Backup codes downloaded!', 'success');
+        }
+
+        // Utility functions for button feedback
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${getNotificationColor(type)};
+                color: white;
+                border-radius: 8px;
+                box-shadow: var(--shadow-lg);
+                z-index: 10000;
+                font-weight: 500;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `
+                <i class="fas fa-${getNotificationIcon(type)}"></i>
+                <span style="margin-left: 0.5rem;">${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        function getNotificationColor(type) {
+            const colors = {
+                'success': '#10b981',
+                'danger': '#ef4444',
+                'warning': '#f59e0b',
+                'info': '#2563eb'
+            };
+            return colors[type] || colors.info;
+        }
+
+        function getNotificationIcon(type) {
+            const icons = {
+                'success': 'check-circle',
+                'danger': 'exclamation-triangle',
+                'warning': 'exclamation-circle',
+                'info': 'info-circle'
+            };
+            return icons[type] || icons.info;
+        }
+
+        function updateStats() {
+            const totalClinics = document.getElementById('total-clinics');
+            if (totalClinics) {
+                totalClinics.textContent = sampleData.clinics.length;
+            }
+        }
+
+        function updatePatientCount() {
+            const patientsToday = document.getElementById('patients-today');
+            if (patientsToday) {
+                const current = parseInt(patientsToday.textContent);
+                patientsToday.textContent = current + 1;
+            }
+        }
+
+        // Additional button functions
+        function requestDelivery() {
+            const medicine = prompt('Enter medicine name for delivery request:');
+            if (medicine) {
+                showNotification(`Delivery requested for ${medicine}`, 'info');
+            }
+        }
+
+        function viewEmergencyHistory() {
+            showNotification('Opening emergency history...', 'info');
+        }
+
+        function viewEmergencyDetails(alertId) {
+            showNotification(`Viewing details for emergency #${alertId}`, 'info');
+        }
+
+        function monitorPowerStatus(alertId) {
+            showNotification('Power monitoring activated', 'warning');
+        }
+
+        function refreshPowerSchedule() {
+            const btn = event.target;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                showNotification('Power schedule updated!', 'success');
+            }, 1200);
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            const btn = event.target;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                showNotification('Settings saved successfully!', 'success');
+            }, 1000);
+        }
+
+        function updateNotificationSetting(type, enabled) {
+            const status = enabled ? 'enabled' : 'disabled';
+            showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} notifications ${status}`, 'info');
+        }
+
+        function updateSyncInterval(minutes) {
+            showNotification(`Sync interval updated to ${minutes} minutes`, 'success');
+        }
+
+        // Clinic management functions
+        function viewClinicDetails(clinicId) {
+            showNotification(`Viewing details for clinic #${clinicId}`, 'info');
+        }
+
+        function editClinic(clinicId) {
+            const clinic = sampleData.clinics.find(c => c.id === clinicId);
+            if (clinic) {
+                const newName = prompt('Enter new clinic name:', clinic.name);
+                if (newName) {
+                    clinic.name = newName;
+                    loadClinics();
+                    showNotification('Clinic updated successfully!', 'success');
+                }
+            }
+        }
+
+        function togglePowerSource(clinicId) {
+            const clinic = sampleData.clinics.find(c => c.id === clinicId);
+            if (clinic) {
+                clinic.power = clinic.power === 'grid' ? 'backup' : 'grid';
+                clinic.status = clinic.power === 'grid' ? 'online' : 'backup';
+                clinic.battery = clinic.power === 'grid' ? 100 : Math.floor(Math.random() * 30) + 70;
+                loadClinics();
+                updateBackupStatus();
+                showNotification(`Power source switched to ${clinic.power}`, 'warning');
+            }
+        }
+
+        // Add notification styles
+        const notificationStyles = document.createElement('style');
+        notificationStyles.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(notificationStyles);
+
+        // Mobile menu toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // AI Diagnosis form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const diagnosisForm = document.getElementById('diagnosis-form');
+            if (diagnosisForm) {
+                diagnosisForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const symptoms = this.querySelector('textarea').value;
+                    const age = this.querySelector('input[type="number"]').value;
+                    const clinic = this.querySelector('select').value;
+                    
+                    // Show loading state
+                    const resultsContainer = document.getElementById('diagnosis-results');
+                    resultsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-blue);"></i>
+                            <p style="margin-top: 1rem;">Analyzing symptoms...</p>
+                        </div>
+                    `;
+                    
+                    // Simulate AI analysis
+                    setTimeout(() => {
+                        const riskLevel = Math.random() > 0.7 ? 'HIGH' : Math.random() > 0.5 ? 'MEDIUM' : 'LOW';
+                        const riskScore = Math.floor(Math.random() * 10) + 1;
+                        
+                        let riskColor, riskAction;
+                        if (riskLevel === 'HIGH') {
+                            riskColor = 'critical';
+                            riskAction = 'Seek immediate medical attention';
+                        } else if (riskLevel === 'MEDIUM') {
+                            riskColor = 'urgent';
+                            riskAction = 'Schedule appointment within 24 hours';
+                        } else {
+                            riskColor = 'info';
+                            riskAction = 'Monitor symptoms, rest recommended';
+                        }
+                        
+                        resultsContainer.innerHTML = `
+                            <div class="alert-item alert-${riskColor}">
+                                <div class="alert-icon">
+                                    <i class="fas fa-stethoscope"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Risk Level: ${riskLevel}</div>
+                                    <div class="alert-description">
+                                        <strong>Risk Score:</strong> ${riskScore}/10<br>
+                                        <strong>Recommended Action:</strong> ${riskAction}<br>
+                                        <strong>Symptoms Analyzed:</strong> ${symptoms}
+                                    </div>
+                                    <div class="alert-time">Analysis completed just now</div>
+                                </div>
+                            </div>
+                        `;
+                    }, 1500);
+                });
+            }
+        });
+
+        // Real-time updates simulation
+        setInterval(() => {
+            const patientsToday = document.getElementById('patients-today');
+            if (patientsToday) {
+                const currentPatients = parseInt(patientsToday.textContent);
+                patientsToday.textContent = currentPatients + Math.floor(Math.random() * 3);
+            }
+            
+            // Update charts with new data
+            if (charts.patientFlow && charts.patientFlow.data) {
+                const newData = charts.patientFlow.data.datasets[0].data.map(value => 
+                    Math.max(0, value + Math.floor(Math.random() * 10) - 5)
+                );
+                charts.patientFlow.data.datasets[0].data = newData;
+                charts.patientFlow.update('none');
+            }
+        }, 30000); // Update every 30 seconds
+    </script>
+</body>
+</html>
